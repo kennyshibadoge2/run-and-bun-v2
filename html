@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script>
+        window.gameconfig = {
+            name: "Pokemon Run & Bun",
+            // Added @main to force the CDN to find the new repository name immediately
+            url: "https://cdn.jsdelivr.net/gh/kennyshibadoge2/run-and-bun-v2@main/game.gba",
+            core: "gba",
+            min: 1,
+            max: 2,
+        };
+    </script>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #121212; color: white; font-family: Arial, sans-serif; overflow: hidden; }
+        #game { width: 100vw; height: 100vh; }
+        
+        #loading-screen { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            z-index: 10; 
+            text-align: center;
+        }
+        
+        #loading-image {
+            max-width: 400px; 
+            height: auto;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #status-text {
+            font-size: 1.1rem;
+            color: #ccc;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-screen">
+        <img id="loading-image" src="https://cdn.jsdelivr.net/gh/kennyshibadoge2/run-and-bun-v2@main/image%20(3).png" alt="Pokemon Run & Bun">
+        <div id="status-text">Initializing...</div>
+    </div>
+    
+    <div id="game"></div>
+
+    <script>
+        async function start() {
+            const parts = [];
+            for (let i = window.gameconfig.min; i <= window.gameconfig.max; i++) {
+                parts.push(`${window.gameconfig.url}.part${i}`);
+            }
+
+            try {
+                const buffers = [];
+                for (let i = 0; i < parts.length; i++) {
+                    document.getElementById('status-text').textContent = `Downloading Part ${i + 1}/${parts.length}`;
+                    
+                    const resp = await fetch(parts[i]);
+                    if (!resp.ok) throw new Error(`Part ${i+1} not found at ${parts[i]}`);
+                    buffers.push(await resp.arrayBuffer());
+                }
+
+                const blobUrl = URL.createObjectURL(new Blob(buffers));
+                document.getElementById('loading-screen').remove();
+
+                window.EJS_player = "#game";
+                window.EJS_core = window.gameconfig.core;
+                window.EJS_gameName = window.gameconfig.name;
+                window.EJS_startOnLoaded = true;
+                window.EJS_gameUrl = blobUrl;
+                window.EJS_pathtodata = "https://cdn.jsdelivr.net/gh/genizy/emu@master/";
+
+                const loader = document.createElement("script");
+                loader.src = "https://cdn.jsdelivr.net/gh/genizy/emu@master/loader.js";
+                document.body.appendChild(loader);
+            } catch (e) {
+                // This will now show the exact error in the console if it fails
+                document.getElementById('status-text').textContent = "ERROR: Files not found on GitHub.";
+                console.error("Fetch Error:", e);
+            }
+        }
+        start();
+    </script>
+</body>
+</html>
